@@ -53,19 +53,6 @@ try
         end
 
         len = length(d(:,1));
-        [thetas,~]=cart2pol(d(:,1)-p1(1),d(:,2)-p1(2));
-        %把极坐标转为直角坐标，因为基于密度的聚类用的直角坐标
-        [x_on_pre,y_on_pre]=pol2cart(thetas,repmat(r1,1,length(thetas))');
-        x_on_circle=x_on_pre+p1(1);
-        y_on_circle=y_on_pre+p1(2);
-        p_proj=[x_on_circle,y_on_circle];
-
-        minPts = 5;epsilon=2*r1*sin(15*pi/360); %15度
-        [idx, ~] = dbscan(p_proj, epsilon, minPts);%如果idx都是负数呢。
-        if(max(idx)==-1)
-            iter=iter+1;
-            continue
-        end
 
         % 存最优的圆
         if (len>=lengest)
