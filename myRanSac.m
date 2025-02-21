@@ -22,7 +22,6 @@ largestarclength = 0;
 while iter<itermax
 
     % 随机挑选三个点，三个点不重复
-    % 拟合圆最少需要三个点，拟合直线最少需要两个
     % ran为索引编号
     ran = randperm(m,3)';
     % b为索引得到的点
@@ -33,8 +32,6 @@ while iter<itermax
         iter=iter+1;
         continue
     end
-%     % 选择除了随机得到的三个点外的其他点
-%     c = setdiff(a,b,"rows");
 %   构成圆的点也算进内点
     c=a;
     % 计算每个点到圆心的距离dis
@@ -43,18 +40,10 @@ while iter<itermax
     res = abs(dis - r1);
     % 选择小于误差的点，进入到内点中
     d = c(res<sigma,:);
-%         scatter(a(:,1),a(:,2),'MarkerEdgeColor','blue');
-%         axis equal;
-%         hold on
-%         xfit = p1(1) + r1 * cos(theta);
-%         yfit = p1(2) + r1 * sin(theta);
-%         plot(xfit, yfit, '--', 'Color', 'red', 'LineWidth', 1.5);
-%         scatter(d(:,1),d(:,2),'MarkerEdgeColor','red');
     if(isempty(d))
         iter=iter+1;
         continue
     end
-    %     points=d;radii=r1;center=p1;angle_eps=15;
     [arclength,br,p_proj_sel,long_ip]=findStartandEndPerSet(d,r1,p1,15);
     if arclength==-1
         iter=iter+1;
@@ -67,10 +56,7 @@ while iter<itermax
     end
     iter = iter + 1;
 end
-% % 
-%     scatter(ip_on_circle_sel(:,1), ip_on_circle_sel(:,2),10, 'MarkerEdgeColor','red');
-%     hold on
-%     scatter(longest_ip_on_circle_sel(:,1), longest_ip_on_circle_sel(:,2),30, 'MarkerEdgeColor','blue');
+
 
 
 
