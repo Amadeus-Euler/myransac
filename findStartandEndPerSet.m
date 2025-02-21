@@ -8,7 +8,7 @@ function [arclength,br,p_proj_sel,long_ip] = findStartandEndPerSet(points,radii,
     y_on_circle=y_on_pre+center(2);
     p_proj=[x_on_circle,y_on_circle];
 
-    %epsilon;%可以和半径成正比，本质上就是固定度了。但这个是弧长,后面再改改,r1*2*pi/18
+    %epsilon;%可以和半径成正比，本质上就是固定度了。
     epsilon=2*radii*sin(angle_eps*pi/360); %15度
     minPts = 5;
     [idx, ~] = dbscan(p_proj, epsilon, minPts);%如果idx都是负数呢。
@@ -17,14 +17,8 @@ function [arclength,br,p_proj_sel,long_ip] = findStartandEndPerSet(points,radii,
         return
     end
     %选出非噪声的类
-%     d(:,3)=idx;
-%     d_sel=d(idx>0,:);
     p_proj(:,3)=idx;
     p_proj_sel=p_proj(idx>0,:);
-%         figure
-%         scatter(x_on_circle,y_on_circle,'MarkerEdgeColor','red');axis equal;
-%         figure
-%         scatter(p_proj(:,1), p_proj(:,2), 20, idx, 'filled');axis equal;
     %计算每个类的弧度范围，在极坐标中解决
     [thetas_sets,~]=cart2pol(p_proj_sel(:,1)-center(1),p_proj_sel(:,2)-center(2));
     thetas_sets(thetas_sets < 0) = thetas_sets(thetas_sets < 0) + 2*pi;
@@ -41,22 +35,18 @@ function [arclength,br,p_proj_sel,long_ip] = findStartandEndPerSet(points,radii,
     %当只有一个类
     if (max(idx)==1)
         %仅一类且经过0度怎么判断？
-        %arclength=range_per_set(:,2)*r1;
-        %在直角坐标系中解决吧
-        %虽然有误差，但很小，把点按顺序链接起来的线段近似弧长
+        %在直角坐标系中解决吧    %虽然有误差，但很小，把点按顺序链接起来的线段近似弧长
         order_thetas_sets=sortrows(thetas_sets,1);
         order_thetas_sets(:,2)=radii;
         [xx,yy]=pol2cart(order_thetas_sets(:,1),order_thetas_sets(:,2));
         xxyy=[xx,yy];
-        % scatter(xx, yy, 20, 'filled');
         %计算每个线段长度并求和
         xxyy_cuo=xxyy([length(xxyy),1:(length(xxyy)-1)],:);
         diff_mat=xxyy-xxyy_cuo;
         arclengths=zeros(length(xxyy),1);
         for k=1:length(xxyy)
             arclengths(k)=norm(diff_mat(k,:));
-        end
-        
+        end        
         %有时候，整个类的弧长小于eplison,导致没有发现跳跃点，导致弧长大了两倍，删除最大的连线即可
         if sum(arclengths>epsilon)==0
             arclength=sum(arclengths)-max(arclengths);
@@ -64,11 +54,7 @@ function [arclength,br,p_proj_sel,long_ip] = findStartandEndPerSet(points,radii,
             arclengths(arclengths>epsilon)=0;  %大于epsilon的线段是跳跃点的连线，应去除。
             arclength=sum(arclengths);
         end
-       
         range_a_set=arclength/radii;
-%         if abs(range_a_set-range_per_set(1,2))>0.1 %经过了0度
-%             break
-%         end
         if abs(range_a_set-range_per_set(1,2))>0.02 %经过了0度 临界值是0.01722以上，但不能太大
             rows=length(order_thetas_sets);
             % 找到thetas变化最大的两个点，两个点的平均作为分割点
@@ -82,8 +68,7 @@ function [arclength,br,p_proj_sel,long_ip] = findStartandEndPerSet(points,radii,
             range_per_set(1,2)=range_breakset; %修正BR
         end
         long_ip=p_proj_sel;
-        %当存在一个以上的类
-    else
+    else %当存在一个以上的类
         if (sum(range_per_set(:,2))>2*pi-angle_eps*pi/180) %有一个类经过0度，那么范围和一定大于2pi-epsilon对应的弧度:15*pi/180=0.2618
             maxrange=max(range_per_set(:,2));%范围最大的set经过了0度，找到范围最大的set
             maxrange_idx=range_per_set(range_per_set(:,2)==maxrange,1);%范围最大的set的idx为maxrange_idx
@@ -104,19 +89,11 @@ function [arclength,br,p_proj_sel,long_ip] = findStartandEndPerSet(points,radii,
             long_ip=p_proj_sel(p_proj_sel(:,3)==max_id,:);
             %选择弧长范围最大的类
             arclength=max([range_per_remainset(:,2)',range_breakset])*radii;
-
         else
             arclength=max(range_per_set(:,2))*radii; %没一个类经过0度，那么范围和一定小于2pi,直接找最大值即可
             [~,max_id]=max(range_per_set(:,2));
             long_ip=p_proj_sel(p_proj_sel(:,3)==max_id,:);
         end
     end
-%     br2=arclength/radii;
     br=max(range_per_set(:,2));
-%     if br2-br>0.01
-%         print('不对');
-%     end
 end
-%     scatter(d(:,1), d(:,2),10, 'MarkerEdgeColor','red');
-%     hold on
-%     scatter(long_ip(:,1), long_ip(:,2),30, 'MarkerEdgeColor','blue');
